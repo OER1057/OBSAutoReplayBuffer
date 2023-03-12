@@ -24,6 +24,11 @@ class Program
     static bool Connected { get; set; } = false;
     private async Task OnExecute()
     {
+        if (Process.GetProcessesByName("OBSAutoReplayBuffer").Length >= 2)
+        {
+            Console.WriteLine("OBSAutoReplayBuffer is already running.");
+            Environment.Exit(1);
+        }
         ws.Connected += (o, e) => { Connected = true; Console.WriteLine("Connected"); };
         ws.Disconnected += (o, e) => { Connected = false; Console.WriteLine("Disconnected"); };
         await LaunchOBS();
