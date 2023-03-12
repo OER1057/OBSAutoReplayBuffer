@@ -43,6 +43,7 @@ class Program
             };
             Console.WriteLine("Launching OBS");
             Process.Start(startInfo);
+            Console.WriteLine("Give OBS 5 sec to launch obs-websocket");
             await Task.Delay(5000); // すぐにつなぐと一旦つながるが切られる。リプレイバッファ開始してから切られるとめんどい
         }
         if (!Connected)
@@ -71,6 +72,7 @@ class Program
         }
     }
     static bool IsRunning { get; set; } = false;
+    static readonly int WatchInterval = 1000;
     static async Task WatchProcess()
     {
         Console.WriteLine("Start Monitoring");
