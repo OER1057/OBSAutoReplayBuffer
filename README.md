@@ -2,7 +2,7 @@
 
 特定のアプリケーションの起動、停止と[OBS Studio](https://github.com/obsproject/obs-studio)のリプレイバッファを連動させるソフトウェアです。
 
-GeForce Experienceのインスタントリプレイの代わりにOBSのリプレイバッファを用いる場合、スタートアップに`obs64.exe --startreplaybuffer --minimize-to-tray`を登録する方法が主流ですが、このほうほうでは録画対象のウィンドウがないときにもエンコード、記録が行われてしまいます。「真っ黒な画面」のエンコード負荷はなぜかゲーム画面のそれより倍以上に高く、気持ちがよいとは言えません。OBSAutoReplayBufferは
+GeForce Experienceのインスタントリプレイの代わりにOBSのリプレイバッファを用いる場合、スタートアップに`obs64.exe --startreplaybuffer --minimize-to-tray`を登録する方法が主流ですが、この方法では録画対象のウィンドウがないときにもエンコード、記録が行われてしまい、余計な負荷がかかります(「真っ黒な画面」のエンコード負荷はなぜかゲーム画面のそれより倍以上に高い)。OBSAutoReplayBufferは「必要な時だけリプレイバッファ」を実現します。
 
 ## スタートアップ登録
 
