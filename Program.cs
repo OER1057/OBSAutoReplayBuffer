@@ -1,16 +1,60 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Data;
+using System.Diagnostics;
+using McMaster.Extensions.CommandLineUtils;
 using OBSWebsocketDotNet;
 
 namespace OBSAutoReplayBuffer;
 class Program
 {
+    [Argument(0, "Process Name", "Name of process to detect.")]
+    [Required]
     static string[] ProcessNames { get; set; } = new string[0];
+    [Option("-o|--obs", Description = "Specify OBS executable file path.")]
     static string OBSExe { get; set; } = @"C:\Program Files\obs-studio\bin\64bit\obs64.exe";
-    static int Port { get; set; } = 0;
+    [Option("-p|--port", Description = "Specify port of obs-websocket server.")]
+    static int Port { get; set; } = 4455;
+    [Option("-w|--password", Description = "Specify password of obs-websocket server if set.")]
     static string Password { get; set; } = "";
-    static bool Connected { get; set; } = false;
-    static bool IsRunning { get; set; } = false;
+    static void Main(string[] args)
+    {
+        CommandLineApplication.Execute<Program>(args);
+    }
     static OBSWebsocket ws = new OBSWebsocket();
+    static bool Connected { get; set; } = false;
+    private async Task OnExecute()
+    {
+        ws.Connected += (o, e) => { Connected = true; Console.WriteLine("Connected"); };
+        ws.Disconnected += (o, e) => { Connected = false; Console.WriteLine("Disconnected"); };
+        await LaunchOBS();
+        await WatchProcess();
+    }
+
+    static async Task LaunchOBS()
+    {
+        if (Process.GetProcessesByName("obs64").Length == 0)
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                Arguments = "--minimize-to-tray",
+                UseShellExecute = false,
+                FileName = OBSExe,
+                WorkingDirectory = Path.GetDirectoryName(OBSExe),
+            };
+            Process.Start(startInfo);
+            await Task.Delay(5000); // すぐにつなぐと一旦つながるが切られる。リプレイバッファ開始してから切られるとめんどい
+        }
+        if (!Connected)
+        {
+            ws.ConnectAsync($"ws://localhost:{Port}", "HfdQPy8MsFNBUDlI");
+            while (!Connected)
+            {
+                // 接続まで待機
+                await Task.Delay(500);
+            }
+        }
+    }
+
     static async Task OnProcessStart()
     {
         await LaunchOBS();
@@ -23,41 +67,7 @@ class Program
             ws.StopReplayBuffer();
         }
     }
-    static async Task Main(string[] args)
-    {
-        ProcessNames = new[] { "Notepad" };
-        Port = 4455;
-        Password = "";
-
-        ws.Connected += (o, e) => { Connected = true; Console.WriteLine("Connected"); };
-        ws.Disconnected += (o, e) => { Connected = false; Console.WriteLine("Disconnected"); };
-        await LaunchOBS();
-        await WatchProcess();
-    }
-    static async Task LaunchOBS()
-    {
-        if (Process.GetProcessesByName("obs64").Length == 0)
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                // Arguments = "--minimize-to-tray",
-                UseShellExecute = false,
-                FileName = OBSExe,
-                WorkingDirectory = Path.GetDirectoryName(OBSExe),
-            };
-            Process.Start(startInfo);
-            await Task.Delay(5000); // すぐにつなぐと切られる
-        }
-        if (!Connected)
-        {
-            ws.ConnectAsync($"ws://localhost:{Port}", "HfdQPy8MsFNBUDlI");
-            while (!Connected)
-            {
-                // 接続まで待機
-                await Task.Delay(500);
-            }
-        }
-    }
+    static bool IsRunning { get; set; } = false;
     static async Task WatchProcess()
     {
         while (true)
