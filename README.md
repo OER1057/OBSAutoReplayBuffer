@@ -12,6 +12,8 @@ GeForce Experienceのインスタントリプレイの代わりにOBSのリプ�
 2. 右クリック→新規作成→ショートカット
 3. 項目の場所に`powershell.exe -Command "Start-Process -WindowStyle Hidden 'OBSAutoReplayBuffer.exeの絶対パス' '<プロセス名> [オプション]'"`を入力し進める
 
+UIがないので、終了するにはタスクマネージャで探し出して終了するなり`taskkill /im obsautoreplaybuffer.exe /f`するなりしてください。
+
 ## コマンド
 
 ```
