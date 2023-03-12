@@ -41,6 +41,7 @@ class Program
                 FileName = OBSExe,
                 WorkingDirectory = Path.GetDirectoryName(OBSExe),
             };
+            Console.WriteLine("Launching OBS");
             Process.Start(startInfo);
             await Task.Delay(5000); // すぐにつなぐと一旦つながるが切られる。リプレイバッファ開始してから切られるとめんどい
         }
@@ -57,11 +58,13 @@ class Program
 
     static async Task OnProcessStart()
     {
+        Console.WriteLine("Process Start");
         await LaunchOBS();
         ws.StartReplayBuffer();
     }
     static void OnProcessEnd()
     {
+        Console.WriteLine("Process End");
         if (Connected)
         {
             ws.StopReplayBuffer();
@@ -70,6 +73,7 @@ class Program
     static bool IsRunning { get; set; } = false;
     static async Task WatchProcess()
     {
+        Console.WriteLine("Start Monitoring");
         while (true)
         {
             bool wasRunning = IsRunning;
