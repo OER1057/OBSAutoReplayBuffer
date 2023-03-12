@@ -38,15 +38,15 @@ aces        War Thunder
 
 ### オプション
 
-#### --obs
+#### --obs ファイルパス
 
 OBSの実行ファイルのパスを指定します。指定しなかった場合は`C:\Program Files\obs-studio\bin\64bit\obs64.exe`とします。
 
-#### --port
+#### --port ポート番号
 
 obs-websocketのサーバーポートを指定します。指定しなかった場合は`4455`とします。
 
-#### --password
+#### --password パスワード
 
 obs-websocketのサーバーパスワードを指定します。認証がオフの場合は指定しなくてよいです。
 
