@@ -1,41 +1,46 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Data;
+﻿using System.CommandLine.DragonFruit;
 using System.Diagnostics;
-using McMaster.Extensions.CommandLineUtils;
 using OBSWebsocketDotNet;
 
 namespace OBSAutoReplayBuffer;
 class Program
 {
-    [Argument(0, "Process Name", "Name of process to detect.")]
-    [Required]
-    static string[] ProcessNames { get; set; } = new string[0];
-    [Option("-o|--obs", Description = "Specify OBS executable file path.")]
-    static string OBSExe { get; set; } = @"C:\Program Files\obs-studio\bin\64bit\obs64.exe";
-    [Option("-p|--port", Description = "Specify port of obs-websocket server.")]
-    static int Port { get; set; } = 4455;
-    [Option("-w|--password", Description = "Specify password of obs-websocket server if set.")]
-    static string Password { get; set; } = "";
-    static void Main(string[] args)
-    {
-        CommandLineApplication.Execute<Program>(args);
-    }
-    static OBSWebsocket ws = new OBSWebsocket();
-    static bool Connected { get; set; } = false;
-    private async Task OnExecute()
+    static OBSWebsocket _ws = new OBSWebsocket();
+    static bool _connected = false;
+    static FileInfo _obsExe = new FileInfo(@"C:\Program Files\obs-studio\bin\64bit\obs64.exe");
+    static int _port = 4455;
+    static string? _password;
+    static string[] _processList = new string[0];
+    /// <summary>
+    /// Sync OBS replaybuffer with start/stop specific processes.
+    /// </summary>
+    /// <param name="args">Name of process to detect. [required]</param>
+    /// <param name="obs">Specify OBS executable file path. [default: C:\Program Files\obs-studio\bin\64bit\obs64.exe]</param>
+    /// <param name="port">Specify port of obs-websocket server. [default: 4455]</param>
+    /// <param name="password">Specify password of obs-websocket server if set.</param>
+    static async Task Main(FileInfo? obs, int? port, string? password, string[] args)
     {
         if (Process.GetProcessesByName("OBSAutoReplayBuffer").Length >= 2)
         {
             Console.WriteLine("OBSAutoReplayBuffer is already running.");
             Environment.Exit(1);
         }
-        ws.Connected += (o, e) => { Connected = true; Console.WriteLine("Connected"); };
-        ws.Disconnected += (o, e) => { Connected = false; Console.WriteLine("Disconnected"); };
-        await LaunchOBS();
-        await WatchProcess();
+        _obsExe = obs ?? _obsExe;
+        _port = port ?? _port;
+        _password = password;
+        _processList = args;
+        if (_processList.Length == 0)
+        {
+            Console.Error.WriteLine("Missing required argument");
+            Environment.Exit(1);
+        }
+        _ws.Connected += (o, e) => { _connected = true; Console.WriteLine("Connected"); };
+        _ws.Disconnected += (o, e) => { _connected = false; Console.WriteLine("Disconnected"); };
+        await LaunchAndConnectOBS();
+        await WatchProcess(_processList);
     }
 
-    static async Task LaunchOBS()
+    static async Task LaunchAndConnectOBS()
     {
         if (Process.GetProcessesByName("obs64").Length == 0)
         {
@@ -43,18 +48,18 @@ class Program
             {
                 Arguments = "--minimize-to-tray",
                 UseShellExecute = false,
-                FileName = OBSExe,
-                WorkingDirectory = Path.GetDirectoryName(OBSExe),
+                FileName = _obsExe.FullName,
+                WorkingDirectory = _obsExe.DirectoryName,
             };
             Console.WriteLine("Launching OBS");
             Process.Start(startInfo);
             Console.WriteLine("Give OBS 5 sec to launch obs-websocket");
             await Task.Delay(5000); // すぐにつなぐと一旦つながるが切られる。リプレイバッファ開始してから切られるとめんどい
         }
-        if (!Connected)
+        if (!_connected)
         {
-            ws.ConnectAsync($"ws://localhost:{Port}", "");
-            while (!Connected)
+            _ws.ConnectAsync($"ws://localhost:{_port}", _password);
+            while (!_connected)
             {
                 // 接続まで待機
                 await Task.Delay(500);
@@ -65,27 +70,27 @@ class Program
     static async Task OnProcessStart()
     {
         Console.WriteLine("Process Start");
-        await LaunchOBS();
-        ws.StartReplayBuffer();
+        await LaunchAndConnectOBS();
+        _ws.StartReplayBuffer();
     }
     static void OnProcessEnd()
     {
         Console.WriteLine("Process End");
-        if (Connected)
+        if (_connected)
         {
-            ws.StopReplayBuffer();
+            _ws.StopReplayBuffer();
         }
     }
-    static bool IsRunning { get; set; } = false;
-    static readonly int WatchInterval = 1000;
-    static async Task WatchProcess()
+    static bool IsRunning = false;
+    static readonly int _watchInterval = 1000;
+    static async Task WatchProcess(string[] processNames)
     {
         Console.WriteLine("Start Monitoring");
         while (true)
         {
             bool wasRunning = IsRunning;
             bool isRunning = false;
-            foreach (string processName in ProcessNames)
+            foreach (string processName in processNames)
             {
                 if (Process.GetProcessesByName(processName).Length > 0)
                 {
@@ -102,7 +107,7 @@ class Program
                 _ = Task.Run(OnProcessEnd);
             }
             IsRunning = isRunning;
-            await Task.Delay(500);
+            await Task.Delay(_watchInterval);
         }
     }
 }
