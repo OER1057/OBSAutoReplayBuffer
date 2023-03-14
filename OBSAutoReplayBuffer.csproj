@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.2" />
     <PackageReference Include="obs-websocket-dotnet" Version="5.0.0.3" />
+    <PackageReference Include="System.CommandLine.DragonFruit" Version="0.4.0-alpha.23164.1" />
   </ItemGroup>
 
 </Project>
