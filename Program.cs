@@ -53,7 +53,7 @@ class Program
         }
         if (!Connected)
         {
-            ws.ConnectAsync($"ws://localhost:{Port}", "HfdQPy8MsFNBUDlI");
+            ws.ConnectAsync($"ws://localhost:{Port}", "");
             while (!Connected)
             {
                 // 接続まで待機
