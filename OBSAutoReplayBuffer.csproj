@@ -9,7 +9,7 @@
     <Version>0.0.0</Version>
     <Platforms>x64</Platforms>
     <PublishRelease>true</PublishRelease>
-    <ResourceLanguages>en</ResourceLanguages>
+    <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
