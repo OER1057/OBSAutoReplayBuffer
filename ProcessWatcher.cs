@@ -3,21 +3,20 @@ namespace OBSAutoReplayBuffer;
 public class ProcessWatcher : IDisposable
 {
     readonly string[] _processNames;
-    readonly int _pollRate;
-    readonly CancellationTokenSource _watcherCTS;
+    readonly CancellationTokenSource _watcherCTS = new CancellationTokenSource();
+    int? _pollRate;
     Task? _watcherTask;
-    public ProcessWatcher(string[] processNames, int pollRate = 1000)
+    public ProcessWatcher(string[] processNames)
     {
         _processNames = processNames;
-        _pollRate = pollRate;
-        _watcherCTS = new CancellationTokenSource();
     }
     public event EventHandler? OnFirstProcessStart;
     public event EventHandler? OnAllProcessesEnd;
-    public void Start()
+    public void Start(int pollRate = 1000)
     {
         if (_watcherTask == null)
         {
+            _pollRate = pollRate;
             _watcherTask = Watch(_watcherCTS.Token);
         }
     }
@@ -41,7 +40,7 @@ public class ProcessWatcher : IDisposable
                 OnAllProcessesEnd?.Invoke(this, EventArgs.Empty);
             }
             lastProcesses = currentProcesses;
-            await Task.Delay(_pollRate);
+            await Task.Delay(_pollRate ?? 0);
         }
     }
     public void Dispose()
