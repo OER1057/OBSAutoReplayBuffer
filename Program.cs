@@ -84,16 +84,24 @@ class Program
 
     static async Task OnProcessStart()
     {
-        Console.WriteLine("Process start. Start replay buffer.");
+        Console.WriteLine("Process start.");
         await LaunchAndConnectOBS();
-        _ws.StartReplayBuffer();
+        if (!_ws.GetReplayBufferStatus())
+        {
+            Console.WriteLine("Start replay buffer.");
+            _ws.StartReplayBuffer();
+        }
     }
     static void OnProcessEnd()
     {
-        Console.WriteLine("Process end. Stop replay buffer.");
+        Console.WriteLine("Process end.");
         if (_connected)
         {
-            _ws.StopReplayBuffer();
+            if (_ws.GetReplayBufferStatus())
+            {
+                Console.WriteLine("Stop replay buffer.");
+                _ws.StopReplayBuffer();
+            }
         }
     }
 }
