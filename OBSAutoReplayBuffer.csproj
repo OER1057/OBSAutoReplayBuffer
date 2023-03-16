@@ -9,6 +9,8 @@
     <Version>0.0.0</Version>
     <Platforms>x64</Platforms>
     <PublishRelease>true</PublishRelease>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
     <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
   </PropertyGroup>
 
@@ -17,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="README.files/*" CopyToOutputDirectory="Always" />
     <Content Include="LICENSE" CopyToOutputDirectory="Always" />
     <Content Include="NOTICE.md" CopyToOutputDirectory="Always" />
     <Content Include="README.md" CopyToOutputDirectory="Always" />

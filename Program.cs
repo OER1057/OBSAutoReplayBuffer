@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using System.Data;
-using System.CommandLine.DragonFruit;
+﻿using System.CommandLine.DragonFruit;
 using System.Diagnostics;
 using OBSWebsocketDotNet;
 
@@ -29,6 +27,7 @@ class Program
             Console.WriteLine("OBSAutoReplayBuffer is already running.");
             Environment.Exit(1);
         }
+
         _obsExe = obs ?? _obsExe;
         if (!_obsExe.Exists)
         {
@@ -43,10 +42,17 @@ class Program
             Console.Error.WriteLine("Missing required argument(s).");
             Environment.Exit(1);
         }
+
         _ws.Connected += (_, _) => { _connected = true; Console.WriteLine("Connected."); };
         _ws.Disconnected += (_, _) => { _connected = false; Console.WriteLine("Disconnected."); };
         await LaunchAndConnectOBS();
-        await WatchProcess(_processList);
+
+        var watcher = new ProcessWatcher(_processList);
+        watcher.OnAllProcessesEnd += (_, _) => OnProcessEnd();
+        watcher.OnFirstProcessStart += async (_, _) => await OnProcessStart();
+        watcher.Start();
+
+        while (true) { await Task.Delay(int.MaxValue); }
     }
 
     static async Task LaunchAndConnectOBS()
@@ -78,45 +84,24 @@ class Program
 
     static async Task OnProcessStart()
     {
-        Console.WriteLine("Process start. Start replay buffer.");
+        Console.WriteLine("Process start.");
         await LaunchAndConnectOBS();
-        _ws.StartReplayBuffer();
+        if (!_ws.GetReplayBufferStatus())
+        {
+            Console.WriteLine("Start replay buffer.");
+            _ws.StartReplayBuffer();
+        }
     }
     static void OnProcessEnd()
     {
-        Console.WriteLine("Process end. Stop replay buffer.");
+        Console.WriteLine("Process end.");
         if (_connected)
         {
-            _ws.StopReplayBuffer();
-        }
-    }
-    static bool IsRunning = false;
-    static readonly int _watchInterval = 1000;
-    static async Task WatchProcess(string[] processNames)
-    {
-        Console.WriteLine("Start monitoring.");
-        while (true)
-        {
-            bool wasRunning = IsRunning;
-            bool isRunning = false;
-            foreach (string processName in processNames)
+            if (_ws.GetReplayBufferStatus())
             {
-                if (Process.GetProcessesByName(processName).Length > 0)
-                {
-                    isRunning = true;
-                    break;
-                }
+                Console.WriteLine("Stop replay buffer.");
+                _ws.StopReplayBuffer();
             }
-            if (!wasRunning && isRunning)
-            {
-                _ = Task.Run(OnProcessStart);
-            }
-            else if (wasRunning && !isRunning)
-            {
-                _ = Task.Run(OnProcessEnd);
-            }
-            IsRunning = isRunning;
-            await Task.Delay(_watchInterval);
         }
     }
 }
