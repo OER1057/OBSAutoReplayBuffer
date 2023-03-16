@@ -9,6 +9,8 @@
     <Version>0.0.0</Version>
     <Platforms>x64</Platforms>
     <PublishRelease>true</PublishRelease>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
     <SatelliteResourceLanguages>none</SatelliteResourceLanguages>
   </PropertyGroup>
 
