@@ -27,7 +27,6 @@ public class ProcessWatcher : IDisposable
         var lastProcesses = new List<Process>();
         while (!ct.IsCancellationRequested)
         {
-            Console.WriteLine("poll");
             currentProcesses = new List<Process>();
             foreach (var processName in _processNames)
             {
